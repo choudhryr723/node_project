@@ -1,0 +1,8 @@
+*.env
+.env
+.env.*
+.prettierrc
+.vscode
+/node_modules
+./dist
+/.cache
