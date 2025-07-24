@@ -1,10 +1,10 @@
 import jsonwebtoken from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 
 
-const userSchema = new monogoose.Schema({
+const userSchema = new mongoose.Schema({
     watchHistory: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Video"

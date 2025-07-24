@@ -1,6 +1,6 @@
 class ApiError extends Error {
     constaructor(statusCode, message = "Somthing went wring", errors = []) {
-        super(message)
+        // super(message)
         this.statusCode = statusCode;
         this.success = false;
         this.data = null;
