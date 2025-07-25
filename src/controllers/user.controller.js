@@ -24,31 +24,31 @@ const registerUser = asyncHandler(async (req, res) => {
     }
     const existedUser = await User.findOne({ $or: [{ userName }, { email },] })
     if (existedUser) {
-        throw new ApiError(400, "User already exists with this email or username")
+        throw res.status(404).json(new ApiResponse(404, {}, "already exist username and email",))
     }
-    const avatarLocalImage = await req.files?.avatar[0]?.path;
-    const coverImageLocalImage = await req.files?.coverImage[0]?.path;
-    console.log("All uploaded files:", req.files);
-    console.log("Avatar file:", req.files?.avatar);
-    console.log("Avatar path:", req.files?.avatar?.[0]?.path);
-    if (!avatarLocalImage) {
-        throw new ApiError("400", "Avatar is required");
-    }
-    const avatarImage = await uploadImage(avatarLocalImage)
-    const coverImageUpload = await uploadImage(coverImageLocalImage)
-    console.log("Avatar image", avatarImage?.url);
-    console.log("Cover image", avatarImage?.url);
-    if (!avatarImage) {
-        throw new ApiError(400, "Failed to upload avatar image");
-    }
+    // const avatarLocalImage = await req.files?.avatar[0]?.path;
+    // const coverImageLocalImage = await req.files?.coverImage[0]?.path;
+    // console.log("All uploaded files:", req.files);
+    // console.log("Avatar file:", req.files?.avatar);
+    // console.log("Avatar path:", req.files?.avatar?.[0]?.path);
+    // if (!avatarLocalImage) {
+    //     throw new ApiError("400", "Avatar is required");
+    // }
+    // const avatarImage = await uploadImage(avatarLocalImage)
+    // const coverImageUpload = await uploadImage(coverImageLocalImage)
+    // console.log("Avatar image", avatarImage?.url);
+    // console.log("Cover image", avatarImage?.url);
+    // if (!avatarImage) {
+    //     throw new ApiError(400, "Failed to upload avatar image");
+    // }
 
     const userData = await User.create({
-        userName: userName.toLowercase(),
+        userName: userName,
         fullName,
         email,
         password,
-        avatar: avatarImage?.url,
-        coverImage: coverImageUpload?.url || "",
+        // avatar: avatarImage?.url,
+        // coverImage: coverImageUpload?.url || "",
     })
     const createdUser = await User.findByIdAndUpdate(userData._id).select(
         "-password -refreshToken"
