@@ -26,21 +26,21 @@ const registerUser = asyncHandler(async (req, res) => {
     if (existedUser) {
         throw res.status(404).json(new ApiResponse(404, {}, "already exist username and email",))
     }
-    // const avatarLocalImage = await req.files?.avatar[0]?.path;
-    // const coverImageLocalImage = await req.files?.coverImage[0]?.path;
-    // console.log("All uploaded files:", req.files);
-    // console.log("Avatar file:", req.files?.avatar);
-    // console.log("Avatar path:", req.files?.avatar?.[0]?.path);
-    // if (!avatarLocalImage) {
-    //     throw new ApiError("400", "Avatar is required");
-    // }
-    // const avatarImage = await uploadImage(avatarLocalImage)
-    // const coverImageUpload = await uploadImage(coverImageLocalImage)
-    // console.log("Avatar image", avatarImage?.url);
-    // console.log("Cover image", avatarImage?.url);
-    // if (!avatarImage) {
-    //     throw new ApiError(400, "Failed to upload avatar image");
-    // }
+    const avatarLocalImage = await req.files?.avatar[0]?.path;
+    const coverImageLocalImage = await req.files?.coverImage[0]?.path;
+    console.log("All uploaded files:", req.files);
+    console.log("Avatar file:", req.files?.avatar);
+    console.log("Avatar path:", req.files?.avatar?.[0]?.path);
+    if (!avatarLocalImage) {
+        throw new ApiError("400", "Avatar is required");
+    }
+    const avatarImage = await uploadImage(avatarLocalImage)
+    const coverImageUpload = await uploadImage(coverImageLocalImage)
+    console.log("Avatar image", avatarImage.url);
+    console.log("Cover image", avatarImage.url);
+    if (!avatarImage) {
+        throw new ApiError(400, "Failed to upload avatar image");
+    }
 
     const userData = await User.create({
         userName: userName,
@@ -61,6 +61,72 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 
+const loginUser = asyncHandler(async (req, res) => {
+    const userDetails = { email, username, password } = req.body;
+    if (!userDetails.username || !userDetails.email) {
+        throw new ApiError(400, "Username or email is required");
+    }
+
+    const user = User.findOne({
+        $or: [{
+            userName
+        }, { email }]
+    })
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    }
+    const isPasswordCorrect = await user.isPasswordCorrect(password);
+    if (!isPasswordCorrect) {
+        throw new ApiError(401, "Invalid password");
+    }
+    const { accessToken, refershToken } = await generateAccessAndRefereshToken(user._id);
+    if (!accessToken || !refershToken) {
+        throw new ApiError(500, "Failed to generate tokens");
+    }
+    const loginedUser = await User.findById(user._id);
+    select("-password -refreshToken")
+    const options = {
+        httpOnly: true,
+        secure: true,
+
+    }
+
+    return res.status(200).
+        cookie("accessToken", accessToken, options).
+        cookie("refreshToken", refershToken, options).
+        json(new ApiResponse(200, { loginUser, accessToken, refershToken }, "User logged in successfully"))
+});
+
+
+
+
+const generateAccessAndRefereshToken = async (userId) => {
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+        const accessToken = await user.generateAccessToken();
+        const refershToken = await user.generateRefreshToken();
+        user.refershToken = refershToken
+        await user.save({ vaildateBeforeSave: false });
+        return {
+            accessToken,
+            refershToken,
+        }
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while generating tokens");
+    }
+}
+
+
+
+
+const logOutUser = asyncHandler(async (req, res) => {
+    
+})
+
 export {
     registerUser,
+    loginUser
 };
